@@ -54,6 +54,3 @@ if __name__ == "__main__":
             if ty[j] == result[j]:
                 cnt += 1
         print("Matching with K = 1:", cnt / ty.shape[0])
-
-
-
