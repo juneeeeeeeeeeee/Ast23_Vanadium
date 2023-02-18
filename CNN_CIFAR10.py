@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 
 from openCIFAR import unpickle
 
-batch_size = 32
+batch_size = 20
 epoch = 15
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -22,11 +22,12 @@ trainset = torchvision.datasets.CIFAR10(root='./', train=True, download=True, tr
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
 
 testset = torchvision.datasets.CIFAR10(root='./', train=False, download=True, transform=transform)
-testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False)
+testloader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=False)
 
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
+        self.batch = 0
         self.layer = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=4, kernel_size=5),
             nn.ReLU(),
@@ -37,19 +38,20 @@ class CNN(nn.Module):
             nn.ReLU(),
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),
+           nn.MaxPool2d(2, 2),
         )
 
         # Fully Connected Layer
         self.fcLayer = nn.Sequential(
-            nn.Linear(batch_size * 2 * 2, 100),
+            nn.Linear(32 * 2 * 2, 100),
             nn.ReLU(),
             nn.Linear(100, 10)
         )
 
     def forward(self, X):
+        self.batch = X.shape[0]
         out = self.layer(X)
-        out = out.view(batch_size, -1)
+        out = out.view(self.batch, -1)
         out = self.fcLayer(out)
         return out
 
@@ -80,6 +82,7 @@ if __name__ == "__main__":
     for i in range(epoch):
         for image, label in trainloader:
             trainer.trainStep(image, label)
+        print("epoch:", i)
 
     total = 0
     correct = 0
@@ -96,4 +99,6 @@ if __name__ == "__main__":
                 correct += 1
 
         print("Accuracy: ", 100*correct/total)
+        print(correct)
+        print(total)
 
