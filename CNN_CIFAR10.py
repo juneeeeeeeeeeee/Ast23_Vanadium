@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, datasets
 
 batch_size = 128
-epoch = 100
+epoch = 20
 
 # Set Devices (M1/M2 mps, NVIDIA cuda:0, else cpu)
 device = None
@@ -16,44 +16,72 @@ elif torch.cuda.is_available():
 else:
     device = "cpu"
 
+
 transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
      ]
 )
 
+# Data Sets
 trainset = datasets.CIFAR10(root='./', train=True, download=True, transform=transform)
 testset = datasets.CIFAR10(root='./', train=False, download=True, transform=transform)
 
 
-class MyDataSet(Dataset):
-    def __init__(self):
-        pass
+class MyDataset(Dataset):
+    def __init__(self, data, label):
+        self.x = torch.tensor(data, dtype=torch.float).permute(0, 3, 1, 2)
+        self.y = torch.tensor(label)
+
+    def __len__(self):
+        return self.x.shape[0]
+
+    def __getitem__(self, index):
+        return self.x[index], self.y[index]
 
 
-trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
+# Data Loaders
+def Loaders(datas=trainset.data, labels=trainset.targets, idx_num=40000):
+    train_datas = datas[:idx_num]
+    valid_datas = datas[idx_num:]
+
+    train_labels = labels[:idx_num]
+    valid_labels = labels[idx_num:]
+
+    train_ds = MyDataset(data=train_datas, label=train_labels)
+    valid_ds = MyDataset(data=valid_datas, label=valid_labels)
+
+    train_load = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    valid_load = DataLoader(valid_ds, batch_size=1, shuffle=False)
+
+    print("Data Loading Completed")
+    return train_load, valid_load
+
+
+trainloader, validloader = Loaders()
 testloader = DataLoader(testset, batch_size=1, shuffle=False)
+
 
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
         self.batch = 0
         self.layer = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=4, kernel_size=3),
+            nn.Conv2d(in_channels=3, out_channels=8, kernel_size=3),
             nn.ReLU(),
-            nn.Conv2d(in_channels=4, out_channels=8, kernel_size=3),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
             nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3),
             nn.ReLU(),
+            nn.MaxPool2d(2, 2),
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3),
             nn.ReLU(),
-           nn.MaxPool2d(2, 2),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
         )
 
         # Fully Connected Layer
         self.fcLayer = nn.Sequential(
-            nn.Linear(32 * 5 * 5, 100),
+            nn.Linear(64 * 5 * 5, 100),
             nn.ReLU(),
             nn.Linear(100, 10)
         )
@@ -86,19 +114,32 @@ class Train:
 if __name__ == "__main__":
     print("CNN Test")
     print(device)
-    model = CNN()
-    model.to(device)
-    trainer = Train(1e-3, model)
+    model = CNN().to(device)
+    trainer = Train(1e-4, model)
 
+    # Training
     for i in range(epoch):
+        model.train()
         for image, label in trainloader:
             trainer.trainStep(image, label)
-        print("epoch:", i)
+        model.eval()
+        total = 0
+        correct = 0
+        for image, label in validloader:
+            x = image.to(device)
+            y = label.to(device)
 
-    total = 0
-    correct = 0
+            output = model.forward(x)
+            outidx = torch.argmax(output)
+            total += 1
+            if outidx == y:
+                correct += 1
+        print("epoch: {}, accuracy: {}".format(i + 1, 100*correct/total))
+
 
     with torch.no_grad():
+        total = 0
+        correct = 0
         for image, label in testloader:
             x = image.to(device)
             y = label.to(device)
