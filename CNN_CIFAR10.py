@@ -69,21 +69,23 @@ class CNN(nn.Module):
         super(CNN, self).__init__()
         self.batch = 0
         self.layer = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=8, kernel_size=5),
+            nn.Conv2d(in_channels=3, out_channels=64, kernel_size=5),
             nn.ReLU(),
-            nn.Conv2d(in_channels=8, out_channels=16, kernel_size=5),
+            nn.Conv2d(in_channels=64, out_channels=32, kernel_size=5),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5),
+            nn.Conv2d(in_channels=32, out_channels=16, kernel_size=5),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
         )
 
         # Fully Connected Layer
         self.fcLayer = nn.Sequential(
-            nn.Linear(32 * 4 * 4, 100),
+            nn.Linear(16 * 4 * 4, 32),
             nn.ReLU(),
-            nn.Linear(100, 10)
+            nn.Linear(32, 16),
+            nn.ReLU(),
+            nn.Linear(16, 10)
         )
 
     def forward(self, X):
@@ -105,7 +107,7 @@ class Train:
         x = image.to(device)
         y = label.to(device)
         self.optimizer.zero_grad()
-        output = model.forward(x)
+        output = self.model.forward(x)
         loss = self.lossF(output, y)
         loss.backward()
         self.optimizer.step()
@@ -115,7 +117,7 @@ if __name__ == "__main__":
     print("CNN Test")
     print(device)
     model = CNN().to(device)
-    trainer = Train(3e-3, model)
+    trainer = Train(2e-3, model)
 
     # Training
     for i in range(epoch):
