@@ -18,7 +18,7 @@ else:
     device = "cpu"
 
 batch_size = 128
-epoch = 20
+epoch = 40
 
 
 def train(loader, n_epoch):
@@ -51,10 +51,11 @@ if __name__ == "__main__":
     print("Device on Working: ", device)
 
     model = CNN.CNN().to(device)
-    trainer = Train_01.Trainer01(8e-4, model, device)
+    trainer = Train_01.Trainer01(0.0017093182838058734, model, device)
     train_load, valid_load, test_load = getCIFAR10.getCIFAR10(40000, batch_size)
 
     for i in range(1, epoch + 1):
+        trainer.lr = trainer.lr / 22 / i
         train(train_load, i)
         evaluate(valid_load, i)
 

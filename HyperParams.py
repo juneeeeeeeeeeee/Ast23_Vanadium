@@ -28,7 +28,6 @@ def train(loader):
         trainer.step(image, label)
 
 
-
 def evaluate(loader, n_epoch):
     model.eval()
     correct = 0
@@ -40,22 +39,34 @@ def evaluate(loader, n_epoch):
         correct += batch_size - torch.count_nonzero(result - y)
     if n_epoch > epoch:
         print("Final Result - accuracy: {}, lr: {}\n\n".format(100 * correct / 10000, lr))
+        return correct
     else:
         print("epoch: {}, accuracy: {}".format(n_epoch, 100 * correct / 10000))
 
 
 if __name__ == "__main__":
     train_load, valid_load, test_load = getCIFAR10.getCIFAR10(40000, batch_size)
+    bestLR = -1.
+    bestK = -1.
+    maxCorrect = 0
     for cnt in range(100):
-        lr = 10 ** (4 * random.random() - 6)
-        print(lr)
+        lr = 10 ** (3 * random.random() - 5)
+        k = 10 ** (10 * random.random() - 5)
+        print("try: {}, lr: {}, k: {}".format(cnt+1, lr, k))
         model = CNN.CNN().to(device)
         trainer = Train_01.Trainer01(lr, model, device)
 
         for i in range(1, epoch + 1):
+            trainer.lr = trainer.lr / k / i
             train(train_load)
             evaluate(valid_load, i)
 
         # Training Done
         with torch.no_grad():
-            evaluate(test_load, epoch + 1)
+            n_correct = evaluate(test_load, epoch + 1)
+            if n_correct > maxCorrect:
+                maxCorrect = n_correct
+                bestLR = lr
+                bestK = k
+
+    print("best Accuracy: {}, learning rate: {}, bestK: {}".format(maxCorrect/100, bestLR, bestK))
