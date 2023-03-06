@@ -14,8 +14,8 @@ class LCModel(nn.Module):
         self.batch = x.shape[0]
         x = x.view(self.batch, -1)
         x = self.linear1(x)
-        x = F.leaky_relu(x)
+        # x = F.leaky_relu(x)
         x = self.linear2(x)
-        x = F.leaky_relu(x)
+        # x = F.leaky_relu(x)
         x = self.linear3(x)
         return x

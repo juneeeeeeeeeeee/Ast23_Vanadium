@@ -1,9 +1,10 @@
 '''
 Asterisk Vanadium Project
+Set Hyper Parameters
 '''
 
 import torch
-
+import random
 from Models import LinearClassifier, CNN, FCLayer
 from Trainers import Train_01
 from GetDatas import getCIFAR10
@@ -18,17 +19,14 @@ else:
     device = "cpu"
 
 batch_size = 128
-epoch = 20
+epoch = 5
 
 
-def train(loader, n_epoch):
-    sum_loss = 0
+def train(loader):
     model.train()
     for idx, [image, label] in enumerate(loader):
-        sum_loss += trainer.step(image, label)
-        if idx % 10 == 10 - 1:
-            print("epoch: {}, loss: {}".format(n_epoch, sum_loss / 10))
-            sum_loss = 0
+        trainer.step(image, label)
+
 
 
 def evaluate(loader, n_epoch):
@@ -41,23 +39,23 @@ def evaluate(loader, n_epoch):
         result = torch.argmax(output, dim=1)
         correct += batch_size - torch.count_nonzero(result - y)
     if n_epoch > epoch:
-        print("Final Result - accuracy: {}\n\n".format(100 * correct / 10000))
+        print("Final Result - accuracy: {}, lr: {}\n\n".format(100 * correct / 10000, lr))
     else:
-        print("epoch: {}, accuracy: {}\n\n".format(n_epoch, 100 * correct / 10000))
+        print("epoch: {}, accuracy: {}".format(n_epoch, 100 * correct / 10000))
 
 
 if __name__ == "__main__":
-    print("main.py")
-    print("Device on Working: ", device)
-
-    model = CNN.CNN().to(device)
-    trainer = Train_01.Trainer01(8e-4, model, device)
     train_load, valid_load, test_load = getCIFAR10.getCIFAR10(40000, batch_size)
+    for cnt in range(100):
+        lr = 10 ** (4 * random.random() - 6)
+        print(lr)
+        model = CNN.CNN().to(device)
+        trainer = Train_01.Trainer01(lr, model, device)
 
-    for i in range(1, epoch + 1):
-        train(train_load, i)
-        evaluate(valid_load, i)
+        for i in range(1, epoch + 1):
+            train(train_load)
+            evaluate(valid_load, i)
 
-    # Training Done
-    with torch.no_grad():
-        evaluate(test_load, epoch + 1)
+        # Training Done
+        with torch.no_grad():
+            evaluate(test_load, epoch + 1)
