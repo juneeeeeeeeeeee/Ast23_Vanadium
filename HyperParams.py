@@ -28,7 +28,6 @@ def train(loader):
         trainer.step(image, label)
 
 
-
 def evaluate(loader, n_epoch):
     model.eval()
     correct = 0
@@ -41,11 +40,11 @@ def evaluate(loader, n_epoch):
     if n_epoch > epoch:
         print("Final Result - accuracy: {}, lr: {}\n\n".format(100 * correct / 10000, lr))
     else:
-        print("epoch: {}, accuracy: {}".format(n_epoch, 100 * correct / 10000))
+        print("epoch: {}, accuracy: {}".format(n_epoch, 100 * correct / 1000))
 
 
 if __name__ == "__main__":
-    train_load, valid_load, test_load = getCIFAR10.getCIFAR10(40000, batch_size)
+    train_load, valid_load, test_load = getCIFAR10.getCIFAR10(49000, batch_size)
     for cnt in range(100):
         lr = 10 ** (4 * random.random() - 6)
         print(lr)
@@ -59,3 +58,5 @@ if __name__ == "__main__":
         # Training Done
         with torch.no_grad():
             evaluate(test_load, epoch + 1)
+
+

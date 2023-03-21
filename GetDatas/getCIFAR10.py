@@ -25,8 +25,8 @@ class MyDataset(Dataset):
 
 def getCIFAR10(n_train=40000, batch_size=1):
     # Data Sets
-    trainset = datasets.CIFAR10(root='../', train=True, download=True)
-    testset = datasets.CIFAR10(root='../', train=False, download=True, transform=transform)
+    trainset = datasets.CIFAR10(root='./', train=True, download=True)
+    testset = datasets.CIFAR10(root='./', train=False, download=True, transform=transform)
 
     datas = trainset.data
     labels = trainset.targets

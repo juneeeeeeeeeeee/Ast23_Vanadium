@@ -3,6 +3,7 @@ Asterisk Vanadium Project
 '''
 
 import torch
+import numpy as np
 
 from Models import LinearClassifier, CNN, FCLayer
 from Trainers import Train_01
@@ -18,7 +19,7 @@ else:
     device = "cpu"
 
 batch_size = 128
-epoch = 20
+epoch = 10
 
 
 def train(loader, n_epoch):
@@ -33,17 +34,22 @@ def train(loader, n_epoch):
 
 def evaluate(loader, n_epoch):
     model.eval()
+    val = np.zeros(10, dtype=int)
+    count = np.zeros(10, dtype=int)
     correct = 0
     for image, label in loader:
         x = image.to(device)
         y = label.to(device)
         output = model.forward(x)
         result = torch.argmax(output, dim=1)
+        for res, ans in zip(result, y):
+            count[ans] += 1
+            if res == ans:
+                val[ans] += 1
         correct += batch_size - torch.count_nonzero(result - y)
-    if n_epoch > epoch:
-        print("Final Result - accuracy: {}\n\n".format(100 * correct / 10000))
-    else:
-        print("epoch: {}, accuracy: {}\n\n".format(n_epoch, 100 * correct / 10000))
+    for idx in range(10):
+        print("class {}: {} / {}".format(idx, val[idx], count[idx]))
+    print("epoch: {}, accuracy: {}\n\n".format(n_epoch, 100 * correct / 10000))
 
 
 if __name__ == "__main__":
@@ -52,7 +58,7 @@ if __name__ == "__main__":
 
     model = CNN.CNN().to(device)
     trainer = Train_01.Trainer01(0.00305408365, model, device)
-    train_load, valid_load, test_load = getCIFAR10.getCIFAR10(49000, batch_size)
+    train_load, valid_load, test_load = getCIFAR10.getCIFAR10(40000, batch_size)
 
     for i in range(1, epoch + 1):
         train(train_load, i)
@@ -60,4 +66,19 @@ if __name__ == "__main__":
 
     # Training Done
     with torch.no_grad():
-        evaluate(test_load, epoch + 1)
+        model.eval()
+        val = np.zeros(10, dtype=int)
+        correct = 0
+        for image, label in test_load:
+            x = image.to(device)
+            y = label.to(device)
+            output = model.forward(x)
+            result = torch.argmax(output, dim=1)
+            for res, ans in zip(result, y):
+                if res == ans:
+                    val[res] += 1
+            correct += batch_size - torch.count_nonzero(result - y)
+
+        print("Final Result - accuracy: {}\n\n".format(100 * correct / 10000))
+        for i in range(10):
+            print("class {}: {} / 1000".format(i, val[i]))
