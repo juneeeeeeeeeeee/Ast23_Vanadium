@@ -9,7 +9,7 @@ from Models import LinearClassifier, CNN, FCLayer, RESNet
 from Trainers import Train_01
 from GetDatas import getCIFAR10
 
-# Set Devices (M1/M2 mps, NVIDIA cuda:0, else cpu)
+# Set Devices (M1/M2 mps, NVIDIA cuda:0, else cpu) # PoroSad
 device = None
 if torch.backends.mps.is_available():
     device = "mps"
