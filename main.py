@@ -52,6 +52,8 @@ if __name__ == "__main__":
     trainer = Train_01.Trainer01(0.001, model, device)
     train_load, valid_load, test_load = getCIFAR10.getCIFAR10(49000, batch_size)
 
+    model.load_state_dict(torch.load('model_params.pth'))
+
     for i in range(1, epoch + 1):
         train(train_load, i)
         evaluate(valid_load, i)
